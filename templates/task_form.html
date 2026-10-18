@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} · StudySprint Agent{% endblock %}
+{% block content %}
+<section class="form-header">
+  <a class="back-link" href="{{ url_for('index') }}">← Back to tasks</a>
+  <p class="eyebrow">Task details</p>
+  <h1>{{ page_title }}</h1>
+  <p class="muted">Capture the details now so your study plan stays clear.</p>
+</section>
+<form class="task-form" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="form-grid">
+    <label class="field field-wide" for="title">
+      Title
+      <input id="title" name="title" type="text" maxlength="200" required value="{{ values.get('title', '') }}" placeholder="e.g. Write lab report">
+      {% if errors.get('title') %}<span class="error">{{ errors['title'] }}</span>{% endif %}
+    </label>
+    <label class="field" for="course">
+      Course
+      <input id="course" name="course" type="text" maxlength="100" required value="{{ values.get('course', '') }}" placeholder="e.g. Biology 101">
+      {% if errors.get('course') %}<span class="error">{{ errors['course'] }}</span>{% endif %}
+    </label>
+    <label class="field" for="deadline">
+      Deadline
+      <input id="deadline" name="deadline" type="date" required value="{{ values.get('deadline', '') }}">
+      {% if errors.get('deadline') %}<span class="error">{{ errors['deadline'] }}</span>{% endif %}
+    </label>
+    <label class="field" for="urgency">
+      Urgency
+      <select id="urgency" name="urgency" required>
+        {% for level in urgency_levels %}<option value="{{ level }}" {% if values.get('urgency') == level %}selected{% endif %}>{{ level|capitalize }}</option>{% endfor %}
+      </select>
+      {% if errors.get('urgency') %}<span class="error">{{ errors['urgency'] }}</span>{% endif %}
+    </label>
+    <label class="field" for="estimated_minutes">
+      Estimated study time (minutes)
+      <input id="estimated_minutes" name="estimated_minutes" type="number" min="1" max="1440" required value="{{ values.get('estimated_minutes', '') }}" placeholder="60">
+      {% if errors.get('estimated_minutes') %}<span class="error">{{ errors['estimated_minutes'] }}</span>{% endif %}
+    </label>
+    <label class="field field-wide" for="notes">
+      Notes <span class="optional">(optional)</span>
+      <textarea id="notes" name="notes" rows="5" placeholder="Add useful details or a next step">{{ values.get('notes', '') }}</textarea>
+    </label>
+    <label class="checkbox field-wide"><input type="checkbox" name="completed" {% if values.get('completed') %}checked{% endif %}> Already completed</label>
+  </div>
+  <div class="form-actions">
+    <a class="button button-quiet" href="{{ url_for('index') }}">Cancel</a>
+    <button class="button button-primary" type="submit">{{ submit_label }}</button>
+  </div>
+</form>
+{% endblock %}

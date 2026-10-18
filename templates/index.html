@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}My tasks · StudySprint Agent{% endblock %}
+{% macro task_card(task, priority=None) %}
+  <article class="task-card {% if task.completed %}is-complete{% endif %}">
+    <div class="task-main">
+      <div class="task-card-header">
+        <div class="task-title-row">
+          <h2>{{ task.title }}</h2>
+          {% if priority %}<span class="badge badge-{{ priority.label|lower }}" aria-label="Priority: {{ priority.label }}">{{ priority.label }}</span>{% endif %}
+        </div>
+        <span class="status-chip {% if task.completed %}status-complete{% else %}status-pending{% endif %}">
+          <span class="status-dot" aria-hidden="true"></span>
+          {% if task.completed %}Completed{% else %}Pending{% endif %}
+        </span>
+      </div>
+      <p class="course">{{ task.course }}</p>
+      {% if task.notes %}<p class="notes">{{ task.notes }}</p>{% endif %}
+      {% if priority %}<p class="priority-reason"><strong>Why:</strong> {{ priority.explanation }} <span class="score">Score {{ priority.score }}</span></p>{% endif %}
+      <div class="task-meta" aria-label="Task details">
+        <span class="meta-item"><span class="meta-label">Deadline</span><strong>{{ task.deadline.strftime('%b') }} {{ task.deadline.day }}, {{ task.deadline.year }}</strong></span>
+        <span class="meta-item"><span class="meta-label">Urgency</span><span class="urgency urgency-{{ task.urgency|lower }}">{{ task.urgency|capitalize }}</span></span>
+        <span class="meta-item"><span class="meta-label">Study time</span><strong>{{ task.estimated_minutes }} min</strong></span>
+      </div>
+    </div>
+    <div class="task-actions">
+      <form method="post" action="{{ url_for('toggle_task', task_id=task.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-small" type="submit">{% if task.completed %}Mark pending{% else %}Complete{% endif %}</button>
+      </form>
+      <a class="button button-small button-quiet" href="{{ url_for('edit_task', task_id=task.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('delete_task', task_id=task.id) }}" onsubmit="return confirm('Delete this task?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-small button-danger" type="submit">Delete</button>
+      </form>
+    </div>
+  </article>
+{% endmacro %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Your study workspace</p>
+    <h1>My tasks</h1>
+    <p class="muted">Pending tasks are sorted by deadline, urgency, and study time.</p>
+  </div>
+  <a class="button button-primary heading-action" href="{{ url_for('create_task') }}">Add a task</a>
+</section>
+
+<section class="progress-panel" aria-labelledby="progress-heading">
+  <div class="progress-panel-heading">
+    <div>
+      <p class="eyebrow">Study progress</p>
+      <h2 id="progress-heading">Keep your sprint moving</h2>
+    </div>
+    <strong class="progress-percentage">{{ completion_percentage }}%</strong>
+  </div>
+  <div class="progress-track" role="progressbar" aria-label="Task completion progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ completion_percentage }}">
+    <span class="progress-fill" style="width: {{ completion_percentage }}%"></span>
+  </div>
+  <div class="progress-stats">
+    <span><strong>{{ pending_count }}</strong> pending</span>
+    <span><strong>{{ completed_count }}</strong> completed</span>
+    <span><strong>{{ total_tasks }}</strong> total tasks</span>
+  </div>
+</section>
+
+{% if pending_tasks %}
+  <section class="task-section" aria-labelledby="pending-heading">
+    <div class="section-heading"><h2 id="pending-heading">Pending tasks</h2><span>{{ pending_tasks|length }}</span></div>
+    <div class="task-list">
+      {% for task in pending_tasks %}{{ task_card(task, priority_by_id[task.id]) }}{% endfor %}
+    </div>
+  </section>
+{% else %}
+  <section class="empty-state"><h2>No pending tasks</h2><p>Add your next assignment or exam to get started.</p><a class="button button-primary" href="{{ url_for('create_task') }}">Add a task</a></section>
+{% endif %}
+
+{% if completed_tasks %}
+  <section class="task-section completed-section" aria-labelledby="completed-heading">
+    <div class="section-heading"><h2 id="completed-heading">Completed tasks</h2><span>{{ completed_tasks|length }}</span></div>
+    <div class="task-list">
+      {% for task in completed_tasks %}{{ task_card(task) }}{% endfor %}
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

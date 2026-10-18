@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}StudySprint Agent{% endblock %}</title>
+  <script src="{{ url_for('static', filename='theme-init.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+</head>
+<body class="midnight-focus">
+  <header class="site-header">
+    <div class="page-shell header-inner">
+      <a class="brand" href="{{ url_for('index') }}">StudySprint <span>Agent</span></a>
+      <nav class="header-actions">
+        <button class="button button-quiet theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+          <span class="theme-toggle-icon" aria-hidden="true">☼</span>
+          <span class="theme-toggle-label">Light mode</span>
+        </button>
+        {% if current_user.is_authenticated %}
+          <a class="button button-quiet" href="{{ url_for('schedule') }}">Plan my day</a>
+          <a class="button button-primary" href="{{ url_for('create_task') }}">+ Add task</a>
+          <form method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button button-quiet" type="submit">Log out</button>
+          </form>
+        {% else %}
+          <a class="button button-quiet" href="{{ url_for('login') }}">Log in</a>
+          <a class="button button-primary" href="{{ url_for('register') }}">Create account</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+  <main class="page-shell app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

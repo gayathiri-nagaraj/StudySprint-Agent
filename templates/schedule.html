@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Daily schedule · StudySprint Agent{% endblock %}
+{% block content %}
+<section class="form-header">
+  <a class="back-link" href="{{ url_for('index') }}">← Back to tasks</a>
+  <p class="eyebrow">Daily planning</p>
+  <h1>Plan my study day</h1>
+  <p class="muted">Higher-priority tasks are considered first. A task is included only when its full estimated time fits.</p>
+</section>
+
+<form class="schedule-form" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="field" for="available_time">
+    Available study time
+    <div class="time-input">
+      <input id="available_time" name="available_time" type="number" min="1" max="1440" step="0.5" required value="{{ values.get('available_time', '') }}" placeholder="120">
+      <select name="available_unit" aria-label="Available time unit">
+        <option value="minutes" {% if values.get('available_unit') == 'minutes' %}selected{% endif %}>minutes</option>
+        <option value="hours" {% if values.get('available_unit') == 'hours' %}selected{% endif %}>hours</option>
+      </select>
+    </div>
+    {% for error in errors %}<span class="error">{{ error }}</span>{% endfor %}
+  </label>
+  <button class="button button-primary" type="submit">Generate schedule</button>
+</form>
+
+{% if daily_schedule is not none %}
+  <section class="schedule-summary">
+    <div><span class="summary-label">Scheduled</span><strong>{{ daily_schedule.used_minutes }} min</strong></div>
+    <div><span class="summary-label">Available</span><strong>{{ daily_schedule.available_minutes }} min</strong></div>
+    <div><span class="summary-label">Remaining</span><strong>{{ daily_schedule.remaining_minutes }} min</strong></div>
+  </section>
+
+  {% if daily_schedule.scheduled %}
+    <section class="task-section" aria-labelledby="scheduled-heading">
+      <div class="section-heading"><h2 id="scheduled-heading">Today's schedule</h2><span>{{ daily_schedule.scheduled|length }}</span></div>
+      <p class="timeline-note">Tasks are shown in priority order. This timeline shows durations, not exact start or end times.</p>
+      <ol class="study-timeline" aria-label="Scheduled study tasks in priority order">
+        {% for item in daily_schedule.scheduled %}
+          <li class="timeline-item">
+            <div class="timeline-marker" aria-hidden="true"><span>{{ loop.index }}</span></div>
+            <article class="schedule-card timeline-card">
+              <div class="timeline-card-heading">
+                <div class="task-title-row"><h2>{{ item.task.title }}</h2><span class="badge badge-{{ item.priority.label|lower }}">{{ item.priority.label }}</span></div>
+                <strong class="timeline-duration">{{ item.allocated_minutes }} min</strong>
+              </div>
+              <p class="course">{{ item.task.course }}</p>
+              <div class="timeline-details">
+                <span><span class="meta-label">Deadline</span> {% if item.task.deadline %}{{ item.task.deadline.strftime('%b') }} {{ item.task.deadline.day }}, {{ item.task.deadline.year }}{% else %}No deadline{% endif %}</span>
+                <span><span class="meta-label">Allocated</span> {{ item.allocated_minutes }} minutes</span>
+              </div>
+              <p class="priority-reason"><strong>Why:</strong> {{ item.priority.explanation }} <span class="score">Score {{ item.priority.score }}</span></p>
+            </article>
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+  {% else %}
+    <section class="empty-state"><h2>No pending tasks to schedule</h2><p>All tasks are completed, or there are no tasks yet.</p></section>
+  {% endif %}
+
+  {% if daily_schedule.unscheduled %}
+    <section class="task-section" aria-labelledby="unscheduled-heading">
+      <div class="section-heading"><h2 id="unscheduled-heading">Not scheduled today</h2><span>{{ daily_schedule.unscheduled|length }}</span></div>
+      <div class="schedule-list">
+        {% for item in daily_schedule.unscheduled %}
+          <article class="schedule-card unscheduled-card">
+            <div>
+              <div class="task-title-row"><h2>{{ item.task.title }}</h2><span class="badge badge-{{ item.priority.label|lower }}">{{ item.priority.label }}</span></div>
+              <p class="course">{{ item.task.course }} · Estimated {{ item.task.estimated_minutes }} minutes</p>
+              <p class="priority-reason"><strong>Why:</strong> {{ item.priority.explanation }} <span class="score">Score {{ item.priority.score }}</span></p>
+              <p class="unscheduled-reason">{{ item.reason }}</p>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+{% endif %}
+{% endblock %}

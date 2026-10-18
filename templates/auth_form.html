@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} · StudySprint Agent{% endblock %}
+{% block content %}
+<section class="form-header auth-header">
+  <p class="eyebrow">StudySprint Agent</p>
+  <h1>{{ page_title }}</h1>
+  <p class="muted">{{ subtitle }}</p>
+</section>
+<form class="task-form auth-form" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if error %}<p class="error auth-error">{{ error }}</p>{% endif %}
+  {% for message in errors %}<p class="error auth-error">{{ message }}</p>{% endfor %}
+  <label class="field" for="email">Email address
+    <input id="email" name="email" type="email" autocomplete="email" required value="{{ values.get('email', '') }}">
+  </label>
+  <label class="field" for="password">Password
+    <input id="password" name="password" type="password" autocomplete="{% if page_title == 'Log in' %}current-password{% else %}new-password{% endif %}" required>
+  </label>
+  {% if page_title == "Create your account" %}
+    <label class="field" for="password_confirmation">Confirm password
+      <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required>
+    </label>
+  {% endif %}
+  <button class="button button-primary auth-submit" type="submit">{{ submit_label }}</button>
+</form>
+<p class="auth-switch">{% if page_title == "Log in" %}New to StudySprint? <a href="{{ url_for('register') }}">Create an account</a>{% else %}Already have an account? <a href="{{ url_for('login') }}">Log in</a>{% endif %}</p>
+{% endblock %}
