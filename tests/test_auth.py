@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from app import create_app
+from app import create_app, normalize_database_url
 from app.models import Task, User
 from app.security import init_security
 
@@ -142,7 +142,7 @@ def test_production_rejects_sqlite_and_memory_rate_limits(monkeypatch, tmp_path)
                 "TESTING": True,
                 "APP_ENV": "production",
                 "SECRET_KEY": "environment-production-secret",
-                "DATABASE_URL": "postgresql+psycopg://user:pass@localhost/db",
+                "DATABASE_URL": "postgresql+psycopg2://user:pass@localhost/db",
                 "SEED_SAMPLE_DATA": False,
                 "WTF_CSRF_ENABLED": False,
                 "RATE_LIMIT_STORAGE_URI": "memory://",
@@ -191,6 +191,13 @@ def test_production_security_headers_include_hsts():
     response = secure_app.test_client().get("/")
 
     assert response.headers["Strict-Transport-Security"].startswith("max-age=31536000")
+
+
+def test_render_postgres_urls_use_the_installed_psycopg2_driver():
+    assert normalize_database_url("postgres://user:pass@host/db") == "postgresql+psycopg2://user:pass@host/db"
+    assert normalize_database_url("postgresql://user:pass@host/db") == "postgresql+psycopg2://user:pass@host/db"
+    assert normalize_database_url("postgresql+psycopg2://user:pass@host/db") == "postgresql+psycopg2://user:pass@host/db"
+    assert normalize_database_url("sqlite:///studysprint.db") == "sqlite:///studysprint.db"
 
 
 def test_login_rate_limit_returns_429_when_enabled(tmp_path):
